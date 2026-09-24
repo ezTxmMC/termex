@@ -1,22 +1,40 @@
 # OS
 .DS_Store
 Thumbs.db
+*~
+*.swp
 
-# IDEs
+# IDEs / editors
 .idea/
 .vscode/
 *.iml
+*.ipr
+*.iws
+.lumen/
 
 # Env / secrets
 .env
 .env.*
 
-# Go (server)
-server/bin/
-server/*.exe
-server/*.test
-server/*.out
+# Dart / Flutter (app and server)
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.g.dart.tmp
+**/doc/api/
 
-# Flutter (app) - see app/.gitignore for the rest
-app/build/
-app/.dart_tool/
+# Symbolication / obfuscation output
+app.*.symbols
+app.*.map.json
+
+# Release artifacts (scripts/build_appimage.sh)
+/dist/
+*.AppImage
+
+# Sync server runtime data (encrypted vaults + auth tokens)
+/server/data/

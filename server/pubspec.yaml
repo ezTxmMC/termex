@@ -1,0 +1,7 @@
+name: termex_server
+description: Sync server for Termex vaults (stores encrypted blobs only).
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.0.0
