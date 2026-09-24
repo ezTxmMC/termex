@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Env / secrets
+.env
+.env.*
+
+# Go (server)
+server/bin/
+server/*.exe
+server/*.test
+server/*.out
+
+# Flutter (app) - see app/.gitignore for the rest
+app/build/
+app/.dart_tool/
