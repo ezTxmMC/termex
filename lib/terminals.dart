@@ -101,9 +101,12 @@ class _LocalTerminalState extends State<LocalTerminal>
   @override
   void initState() {
     super.initState();
+    // Android ships no bash and leaves $SHELL unset in app processes.
     final shell =
-        Platform.environment['SHELL'] ??
-        (Platform.isWindows ? 'powershell.exe' : 'bash');
+        Platform.isAndroid
+            ? '/system/bin/sh'
+            : Platform.environment['SHELL'] ??
+                (Platform.isWindows ? 'powershell.exe' : 'bash');
     final p = pty = Pty.start(
       shell,
       columns: terminal.viewWidth,

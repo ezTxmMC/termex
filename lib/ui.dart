@@ -95,7 +95,14 @@ class _BtnState extends State<Btn> {
               if (widget.icon != null) widget.icon!,
               if (widget.icon != null && widget.label != null)
                 const SizedBox(width: 6),
-              if (widget.label != null) Text(widget.label!),
+              if (widget.label != null)
+                Flexible(
+                  child: Text(
+                    widget.label!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
             ],
           ),
         ),

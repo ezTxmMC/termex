@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Builds a release Termex AppImage into dist/.
+# Builds a release termex AppImage into dist/.
 # Needs: flutter, appimagetool, ImageMagick (for the icon).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | cut -d+ -f1)
-APPDIR=build/Termex.AppDir
+APPDIR=build/termex.AppDir
 
 flutter build linux --release
 
@@ -23,13 +23,13 @@ chmod +x "$APPDIR/AppRun"
 cat > "$APPDIR/termex.desktop" <<DESK
 [Desktop Entry]
 Type=Application
-Name=Termex
+Name=termex
 Comment=SSH & SFTP client with an encrypted, synced vault
 Exec=termex
 Icon=termex
 Categories=Network;System;TerminalEmulator;
 Terminal=false
-StartupWMClass=com.example.termex
+StartupWMClass=de.eztxm.termex
 DESK
 
 # Icon in Lumen colours: accent prompt on the dark background.
@@ -39,5 +39,5 @@ magick -size 256x256 xc:none \
   -stroke none -fill '#7C8CFF' -draw 'roundrectangle 138,166 196,186 8,8' \
   "$APPDIR/termex.png"
 
-ARCH=x86_64 appimagetool --no-appstream "$APPDIR" "dist/Termex-$VERSION-x86_64.AppImage"
-echo "Built dist/Termex-$VERSION-x86_64.AppImage"
+ARCH=x86_64 appimagetool --no-appstream "$APPDIR" "dist/termex-$VERSION-x86_64.AppImage"
+echo "Built dist/termex-$VERSION-x86_64.AppImage"

@@ -18,15 +18,26 @@ import 'vault_view.dart';
 
 final _desktop = Platform.isLinux || Platform.isWindows || Platform.isMacOS;
 
+/// macOS runs with slimmer chrome, the other desktops keep the roomier bars.
+final _titleBarHeight = Platform.isMacOS ? 30.0 : 36.0;
+final _statusBarHeight = Platform.isMacOS ? 20.0 : 24.0;
+
+/// Below this logical width the layout goes compact: no nav strip, the side
+/// panel floats over the editor instead of sharing the row with it.
+const _compactWidth = 700.0;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (_desktop) {
     await windowManager.ensureInitialized();
+    // macOS gets a compact window; the other desktops keep the wide default.
     await windowManager.waitUntilReadyToShow(
-      const WindowOptions(
-        title: 'Termex',
-        size: Size(1280, 800),
-        minimumSize: Size(760, 480),
+      WindowOptions(
+        title: 'termex',
+        size: Platform.isMacOS ? const Size(1120, 700) : const Size(1280, 800),
+        minimumSize: Platform.isMacOS
+            ? const Size(700, 440)
+            : const Size(760, 480),
         center: true,
         backgroundColor: L.bg,
         titleBarStyle: TitleBarStyle.hidden,
@@ -112,7 +123,7 @@ class TermexApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'Termex',
+    title: 'termex',
     debugShowCheckedModeBanner: false,
     theme: L.data,
     themeAnimationDuration: Duration.zero,
@@ -274,41 +285,56 @@ class _WorkbenchState extends State<Workbench> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < _compactWidth;
+    // On phones the side panel is a full-screen page: the title-bar toggle or
+    // Android's back button returns to the workspace.
+    final panelPage = _ready && compact && _view != null && vault.unlocked;
     return Scaffold(
+      backgroundColor: L.bg,
       body: Focus(
         autofocus: true,
         onKeyEvent: (_, e) => handleAppShortcut(e),
-        child: Column(
-          children: [
-            _TitleBar(
-              title: [
-                if (_tabs.isNotEmpty) _tabs[_index].title,
-                'Termex',
-              ].join(' — '),
-              menus: _menus(),
-              sidebarOpen: _view != null,
-              onToggleSidebar: () =>
-                  setState(() => _view = _view == null ? _View.hosts : null),
-            ),
-            Expanded(
-              child: !_ready
-                  ? const SizedBox()
-                  : Stack(
-                      children: [
-                        Row(
+        child: SafeArea(
+          child: PopScope(
+            canPop: !panelPage,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop) setState(() => _view = null);
+            },
+            child: Column(
+              children: [
+                _TitleBar(
+                  title: [
+                    if (_tabs.isNotEmpty) _tabs[_index].title,
+                    'termex',
+                  ].join(' — '),
+                  menus: _menus(),
+                  sidebarOpen: _view != null,
+                  onToggleSidebar: () =>
+                      setState(() => _view = _view == null ? _View.hosts : null),
+                ),
+                Expanded(
+                  child: !_ready
+                      ? const SizedBox()
+                      : Stack(
                           children: [
-                            _navStrip(),
-                            if (_view != null) _sideDock(),
-                            Expanded(child: _editorArea()),
+                            Row(
+                              children: [
+                                if (!compact) _navStrip(),
+                                if (!compact && _view != null) _sideDock(),
+                                Expanded(child: _editorArea()),
+                              ],
+                            ),
+                            if (compact && _view != null)
+                              Positioned.fill(child: _sidePanel()),
+                            if (!vault.unlocked)
+                              Positioned.fill(child: LockScreen(vault)),
                           ],
                         ),
-                        if (!vault.unlocked)
-                          Positioned.fill(child: LockScreen(vault)),
-                      ],
-                    ),
+                ),
+                _statusBar(compact: compact),
+              ],
             ),
-            _statusBar(),
-          ],
+          ),
         ),
       ),
     );
@@ -409,10 +435,10 @@ class _WorkbenchState extends State<Workbench> {
     'Help': [
       MenuEntry('Keyboard Shortcuts', _showShortcuts, icon: Icons.keyboard),
       MenuEntry(
-        'About Termex',
+        'About termex',
         () => showAboutDialog(
           context: context,
-          applicationName: 'Termex',
+          applicationName: 'termex',
           applicationVersion: '0.2.0',
           applicationLegalese: 'SSH & SFTP client with encrypted vault sync',
         ),
@@ -501,7 +527,8 @@ class _WorkbenchState extends State<Workbench> {
     );
   }
 
-  Widget _sideDock() {
+  /// Header + content of the side panel; width comes from the caller.
+  Widget _sidePanel() {
     final (title, actions, child) = switch (_view!) {
       _View.hosts => (
         'Hosts',
@@ -523,48 +550,49 @@ class _WorkbenchState extends State<Workbench> {
       ),
       _View.sync => ('Vault & Sync', <Widget>[], SyncView(vault)),
     };
-    return Row(
-      children: [
-        Container(
-          width: _sideWidth,
-          color: L.surface,
-          child: Column(
-            children: [
-              SizedBox(
-                height: 32,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 12, right: 4),
-                  child: Row(
-                    children: [
-                      Expanded(child: Caption(title)),
-                      ...actions,
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(child: child),
-            ],
-          ),
-        ),
-        // Resize handle
-        MouseRegion(
-          cursor: SystemMouseCursors.resizeColumn,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onHorizontalDragUpdate: (d) => setState(
-              () => _sideWidth = (_sideWidth + d.delta.dx).clamp(200.0, 520.0),
-            ),
-            child: Container(
-              width: 4,
-              decoration: const BoxDecoration(
-                border: Border(left: BorderSide(color: L.border)),
+    return Container(
+      color: L.surface,
+      child: Column(
+        children: [
+          SizedBox(
+            height: 32,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 4),
+              child: Row(
+                children: [
+                  Expanded(child: Caption(title)),
+                  ...actions,
+                ],
               ),
             ),
           ),
-        ),
-      ],
+          Expanded(child: child),
+        ],
+      ),
     );
   }
+
+  Widget _sideDock() => Row(
+    children: [
+      SizedBox(width: _sideWidth, child: _sidePanel()),
+      // Resize handle
+      MouseRegion(
+        cursor: SystemMouseCursors.resizeColumn,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragUpdate: (d) => setState(
+            () => _sideWidth = (_sideWidth + d.delta.dx).clamp(200.0, 520.0),
+          ),
+          child: Container(
+            width: 4,
+            decoration: const BoxDecoration(
+              border: Border(left: BorderSide(color: L.border)),
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 
   Widget _editorArea() {
     if (_tabs.isEmpty) return _welcome();
@@ -643,7 +671,7 @@ class _WorkbenchState extends State<Workbench> {
           const Icon(Icons.terminal, size: 40, color: L.accent),
           const SizedBox(height: 12),
           const Text(
-            'Termex',
+            'termex',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
@@ -690,11 +718,11 @@ class _WorkbenchState extends State<Workbench> {
     ),
   );
 
-  Widget _statusBar() {
+  Widget _statusBar({required bool compact}) {
     final tab = _tabs.isEmpty ? null : _tabs[_index];
     const style = TextStyle(fontSize: 11, color: L.subtle);
     return Container(
-      height: 24,
+      height: _statusBarHeight,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: const BoxDecoration(
         color: L.surface,
@@ -712,18 +740,27 @@ class _WorkbenchState extends State<Workbench> {
             vault.unlocked ? 'Vault unlocked' : 'Vault locked',
             style: style,
           ),
-          if (vault.unlocked) ...[
+          if (vault.unlocked && !compact) ...[
             const SizedBox(width: 12),
             Text('${vault.hosts.length} hosts', style: style),
           ],
-          if (vault.serverUrl != null) ...[
+          if (vault.serverUrl != null && !compact) ...[
             const SizedBox(width: 12),
             const Icon(Icons.cloud_outlined, size: 11, color: L.subtle),
             const SizedBox(width: 4),
             Text(vault.syncStatus ?? 'Sync configured', style: style),
           ],
           const Spacer(),
-          if (tab?.detail != null) Text(tab!.detail!, style: style),
+          if (tab?.detail != null)
+            Expanded(
+              child: Text(
+                tab!.detail!,
+                textAlign: TextAlign.right,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
           const SizedBox(width: 12),
           Text(
             '${_tabs.length} tab${_tabs.length == 1 ? '' : 's'}',
@@ -899,13 +936,8 @@ class _TitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bar = Container(
-      height: 36,
+    final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: const BoxDecoration(
-        color: L.surface,
-        border: Border(bottom: BorderSide(color: L.border)),
-      ),
       child: Row(
         children: [
           const Icon(Icons.terminal, size: 16, color: L.accent),
@@ -918,11 +950,16 @@ class _TitleBar extends StatelessWidget {
             color: L.border,
           ),
           Expanded(
-            child: Center(
-              child: Text(
-                title,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 12, color: L.subtle),
+            // Purely informational; passing clicks through keeps the title
+            // usable as empty bar space for double-click-to-maximize.
+            child: IgnorePointer(
+              child: Center(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: L.subtle),
+                ),
               ),
             ),
           ),
@@ -951,8 +988,77 @@ class _TitleBar extends StatelessWidget {
         ],
       ),
     );
-    return _desktop ? DragToMoveArea(child: bar) : bar;
+    final bar = Container(
+      height: _titleBarHeight,
+      decoration: const BoxDecoration(
+        color: L.surface,
+        border: Border(bottom: BorderSide(color: L.border)),
+      ),
+      child: _desktop
+          ? Stack(
+              fit: StackFit.expand,
+              children: [
+                const Positioned.fill(child: _TitleBarMaximize()),
+                content,
+              ],
+            )
+          : content,
+    );
+    if (!_desktop) return bar;
+    // Drag via pan only. window_manager's DragToMoveArea also registers an
+    // `onDoubleTap`, and that recognizer holds the gesture arena open for its
+    // whole timeout, so every tap in the bar fired ~300 ms late.
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onPanStart: (_) => windowManager.startDragging(),
+      child: bar,
+    );
   }
+}
+
+/// Double-click on empty title-bar space maximizes or restores the window.
+///
+/// Driven by raw pointer events on purpose: a `GestureDetector(onDoubleTap)`
+/// anywhere in this subtree would delay every other tap in the bar by the
+/// double-tap timeout.
+class _TitleBarMaximize extends StatefulWidget {
+  const _TitleBarMaximize();
+
+  @override
+  State<_TitleBarMaximize> createState() => _TitleBarMaximizeState();
+}
+
+class _TitleBarMaximizeState extends State<_TitleBarMaximize> {
+  Offset _down = Offset.zero;
+  Offset _lastClick = Offset.zero;
+  DateTime _lastClickAt = DateTime.fromMillisecondsSinceEpoch(0);
+
+  Future<void> _toggle() async {
+    await windowManager.isMaximized()
+        ? windowManager.unmaximize()
+        : windowManager.maximize();
+  }
+
+  @override
+  Widget build(BuildContext context) => Listener(
+    behavior: HitTestBehavior.translucent,
+    onPointerDown: (e) {
+      if (e.buttons == kPrimaryButton) _down = e.position;
+    },
+    onPointerUp: (e) {
+      // Movement of a few pixels means a drag (or a sloppy click), not a tap.
+      if ((e.position - _down).distance > 6) return;
+      final now = DateTime.now();
+      final isDouble =
+          now.difference(_lastClickAt) < const Duration(milliseconds: 400) &&
+          (e.position - _lastClick).distance < 12;
+      _lastClick = e.position;
+      _lastClickAt = isDouble
+          ? DateTime.fromMillisecondsSinceEpoch(0)
+          : now;
+      if (isDouble) _toggle();
+    },
+  );
 }
 
 class _MenuButton extends StatelessWidget {

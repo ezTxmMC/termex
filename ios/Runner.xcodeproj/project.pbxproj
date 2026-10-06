@@ -373,7 +373,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.termex;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = termex;
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -393,7 +393,7 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/termex.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/termex";
 			};
 			name = Debug;
 		};
@@ -408,7 +408,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.termex.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/termex.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/termex";
 			};
 			name = Release;
 		};
@@ -423,7 +423,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.termex.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/termex.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/termex";
 			};
 			name = Profile;
 		};
@@ -552,7 +552,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.termex;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = termex;
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -574,7 +574,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.example.termex;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = termex;
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
